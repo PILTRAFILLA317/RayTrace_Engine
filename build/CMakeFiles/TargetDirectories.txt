@@ -1,9 +1,0 @@
-/Users/umartin-/Desktop/Briar_Engine/build/CMakeFiles/BriarEngine.dir
-/Users/umartin-/Desktop/Briar_Engine/build/CMakeFiles/edit_cache.dir
-/Users/umartin-/Desktop/Briar_Engine/build/CMakeFiles/rebuild_cache.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/CMakeFiles/edit_cache.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/CMakeFiles/rebuild_cache.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/src/CMakeFiles/glfw.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/src/CMakeFiles/update_mappings.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/src/CMakeFiles/edit_cache.dir
-/Users/umartin-/Desktop/Briar_Engine/build/binary_dir/src/CMakeFiles/rebuild_cache.dir
