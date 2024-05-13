@@ -12,7 +12,7 @@ var searchData=
   ['wheel_20position_20replaced_20by_20scroll_20offsets_9',['Wheel position replaced by scroll offsets',['../moving_guide.html#moving_wheel',1,'']]],
   ['when_20built_20as_20a_20subproject_10',['Tests and examples are disabled when built as a subproject',['../news.html#standalone_caveat',1,'']]],
   ['wide_20hotkeys_11',['Capture of system-wide hotkeys',['../moving_guide.html#moving_syskeys',1,'']]],
-  ['width_12',['width',['../struct_g_l_f_wvidmode.html#a698dcb200562051a7249cb6ae154c71d',1,'GLFWvidmode::width'],['../struct_g_l_f_wimage.html#af6a71cc999fe6d3aea31dd7e9687d835',1,'GLFWimage::width']]],
+  ['width_12',['width',['../struct_g_l_f_wimage.html#af6a71cc999fe6d3aea31dd7e9687d835',1,'GLFWimage::width'],['../struct_g_l_f_wvidmode.html#a698dcb200562051a7249cb6ae154c71d',1,'GLFWvidmode::width']]],
   ['win32_20mbcs_20support_13',['Win32 MBCS support',['../moving_guide.html#moving_mbcs',1,'']]],
   ['win32_20specific_20cmake_20options_14',['Win32 specific CMake options',['../compile_guide.html#compile_options_win32',1,'']]],
   ['win32_20specific_20hints_15',['Win32 specific hints',['../window_guide.html#window_hints_win32',1,'']]],

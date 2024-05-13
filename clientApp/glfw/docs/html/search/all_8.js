@@ -7,7 +7,7 @@ var searchData=
   ['binaries_20on_20unix_4',['With pkg-config and GLFW binaries on Unix',['../build_guide.html#build_link_pkgconfig',1,'']]],
   ['blue_5',['blue',['../struct_g_l_f_wgammaramp.html#acf0c836d0efe29c392fe8d1a1042744b',1,'GLFWgammaramp']]],
   ['bluebits_6',['blueBits',['../struct_g_l_f_wvidmode.html#af310977f58d2e3b188175b6e3d314047',1,'GLFWvidmode']]],
-  ['buffer_20swapping_7',['buffer swapping',['../context_guide.html#context_swap',1,'Buffer swapping'],['../window_guide.html#buffer_swap',1,'Buffer swapping']]],
+  ['buffer_20swapping_7',['buffer swapping',['../window_guide.html#buffer_swap',1,'Buffer swapping'],['../context_guide.html#context_swap',1,'Buffer swapping']]],
   ['buffers_8',['Swapping buffers',['../quick_guide.html#quick_swap_buffers',1,'']]],
   ['build_20files_20with_20cmake_9',['Generating build files with CMake',['../compile_guide.html#compile_generate',1,'']]],
   ['build_2emd_10',['build.md',['../build_8md.html',1,'']]],
