@@ -16,13 +16,13 @@
 
 EXE = BriarEngine
 IMGUI_DIR = ./clientApp/imgui
-INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src
+INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src -I./clientApp/glad/KHR -I./clientApp/glad/include
 SRC_DIR = clientApp/src
-# GLAD_DIR = ./clientApp/glad/src
-SOURCES = $(SRC_DIR)/main.cpp, $(SRC_DIR)/FrameBuffer.cpp
+GLAD_DIR = ./clientApp/glad/src
+SOURCES = $(SRC_DIR)/main.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
-# SOURCES += $(GLAD_DIR)/glad.c
+SOURCES += $(GLAD_DIR)/glad.c
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
@@ -79,6 +79,9 @@ endif
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.o:$(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+%.o:$(GLAD_DIR)/%.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.o:$(IMGUI_DIR)/%.cpp
