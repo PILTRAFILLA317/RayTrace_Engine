@@ -1,13 +1,7 @@
-// FrameBuffer.h
-
 #pragma once
 #include <iostream>
-#include "../glfw/include/GLFW/glfw3.h"
 #include <OpenGL/gl3.h>
-#include "imgui.h"
-#include <iostream>
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+// #include <glm/glm.hpp>
 
 class FrameBuffer
 {
@@ -18,7 +12,6 @@ public:
 	void RescaleFrameBuffer(float width, float height);
 	void Bind() const;
 	void Unbind() const;
-
 private:
 	unsigned int fbo;
 	unsigned int texture;
