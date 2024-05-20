@@ -65,10 +65,10 @@ void Render(int width, int height)
     glm::uint32 *data = new glm::uint32[width * height];
     for (int y = 0; y < height; y++)
     {
-        std::cerr << "Height: " << height << " Y: " << y << "\n";
         for (int x = 0; x < width; x++)
         {
-            data[y * width + x] = PerPixel(glm::vec2(x, y));
+            // data[y * width + x] = PerPixel(glm::vec2(x, y));
+            data[y * width + x] = PerPixel(glm::vec2(x / (float)width, y / (float)height));
         }
     }
     // Subir los datos a la textura
@@ -155,6 +155,7 @@ int main()
             //     Render(sceneWindowWidth, sceneWindowHeight);
             // }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::Text("Mouse Position: (%.1f, %.1f)", io.MousePos.x, io.MousePos.y);
             ImGui::End();
         }
 
@@ -162,7 +163,7 @@ int main()
         {
             sceneWindowWidth = ImGui::GetContentRegionAvail().x;
             sceneWindowHeight = ImGui::GetContentRegionAvail().y;
-            ImGui::Image((void *)(intptr_t)renderImage, ImVec2(sceneWindowWidth, sceneWindowHeight));
+            ImGui::Image((void *)(intptr_t)renderImage, ImVec2(sceneWindowWidth, sceneWindowHeight), ImVec2(0, 1), ImVec2(1, 0));
             ImGui::End();
         }
 
