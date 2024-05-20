@@ -1,29 +1,41 @@
 #include "FrameBuffer.h"
 #include "../glfw/include/GLFW/glfw3.h"
 // #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include "imgui.h"
 #include <iostream>
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <OpenGL/gl3.h>
 
+GLuint renderImage = 0;
+float sceneWindowWidth = 1280;
+float sceneWindowHeight = 720;
+
 const char *vertexShaderSource = "#version 330 core\n"
                                  "layout (location = 0) in vec3 aPos;\n"
+                                 "uniform float triangleSize;\n"
                                  "void main()\n"
                                  "{\n"
                                  "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
                                  "}\0";
-const char *fragmentShader1Source = "#version 330 core\n"
-                                    "out vec4 FragColor;\n"
-                                    "void main()\n"
-                                    "{\n"
-                                    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                                    "}\n\0";
+const char *fragmentShaderSource = "#version 330 core\n"
+                                   "out vec4 FragColor;\n"
+                                   "uniform vec4 triangleColor;\n"
+                                   "void main()\n"
+                                   "{\n"
+                                   "   FragColor = triangleColor;\n"
+                                   "}\n\0";
 
 // void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // {
 //     glViewport(0, 0, width, height);
 // }
+
+float GetTime()
+{
+    return (float)glfwGetTime();
+}
 
 void processInput(GLFWwindow *window)
 {
@@ -31,36 +43,44 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 }
 
-void renderTriangle()
+glm::uint32 PerPixel(glm::vec2 coord)
 {
-    // Define las coordenadas de los vértices del triángulo
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // Vértice 1 (abajo izquierda)
-        0.5f, -0.5f, 0.0f,  // Vértice 2 (abajo derecha)
-        0.0f, 0.5f, 0.0f    // Vértice 3 (arriba centro)
-    };
+    glm::uint8 r = (glm::uint8)(coord.x * 255.0f);
+    glm::uint8 g = (glm::uint8)(coord.y * 255.0f);
 
-    // Genera un identificador para el búfer de vértices (VBO)
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    return 0xff000000 | (g << 8) | r;
+}
 
-    // Enlaza el búfer de vértices
-    // glBindVertexArray(VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+void Render(int width, int height)
+{
+    // std::cout << "Rendering image with size: " << width << "x" << height << std::endl;
+    if (renderImage != 0)
+    {
+        glDeleteTextures(1, &renderImage);
+    }
+    glGenTextures(1, &renderImage);
+    glBindTexture(GL_TEXTURE_2D, renderImage);
 
-    // Habilita el atributo de posición de los vértices (0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
+    // Generar los datos de la imagen
+    glm::uint32 *data = new glm::uint32[width * height];
+    for (int y = 0; y < height; y++)
+    {
+        std::cerr << "Height: " << height << " Y: " << y << "\n";
+        for (int x = 0; x < width; x++)
+        {
+            data[y * width + x] = PerPixel(glm::vec2(x, y));
+        }
+    }
+    // Subir los datos a la textura
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-    // Dibuja el triángulo
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // Configurar parámetros de la textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Deshabilita el atributo de posición de los vértices (0)
-    glDisableVertexAttribArray(0);
-    glDeleteVertexArrays(1, &VAO);
+    delete[] data;
 }
 
 int main()
@@ -85,85 +105,71 @@ int main()
         glfwTerminate();
         return -1;
     }
-
-    // Haz la ventana GLFW el contexto actual
     glfwMakeContextCurrent(window);
+    // glfwSwapInterval(1); // Enable vsync
     // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    IMGUI_CHECKVERSION();
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     unsigned int fragmentShaderOrange = glCreateShader(GL_FRAGMENT_SHADER); // the first fragment shader that outputs the color orange
-    unsigned int shaderProgramOrange = glCreateProgram();
+    unsigned int shaderProgram = glCreateProgram();
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
-    glShaderSource(fragmentShaderOrange, 1, &fragmentShader1Source, NULL);
+    glShaderSource(fragmentShaderOrange, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShaderOrange);
-    glAttachShader(shaderProgramOrange, vertexShader);
-    glAttachShader(shaderProgramOrange, fragmentShaderOrange);
-    glLinkProgram(shaderProgramOrange);
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShaderOrange);
+    glLinkProgram(shaderProgram);
 
     // Inicializa ImGui
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
 
-    FrameBuffer sceneBuffer(1280, 720);
+    // FrameBuffer sceneBuffer(1280, 720);
 
     // Bucle principal
     while (!glfwWindowShouldClose(window))
     {
+        Render(sceneWindowWidth, sceneWindowHeight);
+        // Procesa los eventos de GLFW
+        glfwPollEvents();
         processInput(window);
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        // Renderiza el triángulo
 
         // Procesa los eventos de ImGui
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        // ImGui::DockSpaceOverViewport();
         ImGui::NewFrame();
+        ImGui::DockSpaceOverViewport();
 
         // Renderiza la ventana de ImGui
-        // {
-        //     ImGui::Begin("Hello, world!");
-        //     ImGui::Text("JULAPAS PUTA VACA");
-        //     ImGui::End();
-        // }
+        {
+            ImGui::Begin("Settings");
+            // if (ImGui::Button("Render"))
+            // {
+            //     Render(sceneWindowWidth, sceneWindowHeight);
+            // }
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::End();
+        }
 
         ImGui::Begin("Scene");
         {
-            const float window_width = ImGui::GetContentRegionAvail().x;
-            const float window_height = ImGui::GetContentRegionAvail().y;
-            ImGui::BeginChild("GameRender");
-            std::cout << "Window width: " << window_width << std::endl;
-            std::cout << "Window height: " << window_height << std::endl;
-            sceneBuffer.RescaleFrameBuffer(window_width, window_height);
-            glViewport(0, 0, window_width, window_height);
-            ImGui::Image(
-                (ImTextureID)sceneBuffer.getFrameTexture(),
-                ImGui::GetContentRegionAvail(),
-                ImVec2(0, 1),
-                ImVec2(1, 0));
+            sceneWindowWidth = ImGui::GetContentRegionAvail().x;
+            sceneWindowHeight = ImGui::GetContentRegionAvail().y;
+            ImGui::Image((void *)(intptr_t)renderImage, ImVec2(sceneWindowWidth, sceneWindowHeight));
+            ImGui::End();
         }
-        ImGui::EndChild();
-        ImGui::End();
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        sceneBuffer.Bind();
-
-        glClearColor(0.3f, 0.0f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Renderiza la ventana de ImGui
-        glUseProgram(shaderProgramOrange);
-        renderTriangle();
-
-        // Intercambia los buffers y maneja los eventos de GLFW
-        sceneBuffer.Unbind();
-
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Limpieza
