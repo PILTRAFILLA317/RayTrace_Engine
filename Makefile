@@ -16,7 +16,7 @@
 
 EXE = BriarEngine
 IMGUI_DIR = ./clientApp/imgui
-INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src -I./clientApp/glad/KHR -I./clientApp/glad/include -I./rayTracer/src
+INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src -I./clientApp/glad/KHR -I./clientApp/glad/include -I./rayTracer/src -I./clientApp/includes
 SRC_DIR = ./clientApp/src
 RT_DIR = ./rayTracer/src
 GLAD_DIR = ./clientApp/glad/src
@@ -29,8 +29,8 @@ OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
-CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
-CXXFLAGS += -g -Wall -Wformat -fsanitize=address
+CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
+CXXFLAGS += -O3 #-g -Wall -Wformat -fsanitize=address
 CXXFLAGS += $(INC_DIR)
 LIBS =
 

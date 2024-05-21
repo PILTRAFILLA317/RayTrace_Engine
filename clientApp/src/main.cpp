@@ -1,36 +1,23 @@
-#include "FrameBuffer.h"
-#include "../glfw/include/GLFW/glfw3.h"
-// #include <glad/glad.h>
-#include <glm/glm.hpp>
-#include "imgui.h"
-#include <iostream>
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include <OpenGL/gl3.h>
+#include "main.h"
 
 GLuint renderImage = 0;
 float sceneWindowWidth = 1280;
 float sceneWindowHeight = 720;
+namespace Utils
+{
 
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "uniform float triangleSize;\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "uniform vec4 triangleColor;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   "   FragColor = triangleColor;\n"
-                                   "}\n\0";
+    static uint32_t ConvertToRGBA(const glm::vec4 &color)
+    {
+        uint8_t r = (uint8_t)(color.r * 255.0f);
+        uint8_t g = (uint8_t)(color.g * 255.0f);
+        uint8_t b = (uint8_t)(color.b * 255.0f);
+        uint8_t a = (uint8_t)(color.a * 255.0f);
 
-// void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-// {
-//     glViewport(0, 0, width, height);
-// }
+        uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
+        return result;
+    }
+
+}
 
 float GetTime()
 {
@@ -43,12 +30,46 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 }
 
-glm::uint32 PerPixel(glm::vec2 coord)
+glm::vec4 PerPixel(glm::vec2 coord)
 {
-    glm::uint8 r = (glm::uint8)(coord.x * 255.0f);
-    glm::uint8 g = (glm::uint8)(coord.y * 255.0f);
+    glm::vec3 rayOrigin(0.0f, 0.0f, 1.0f);
+    glm::vec3 rayDirection(coord.x, coord.y, -1.0f);
+    float radius = 0.5f;
+    // rayDirection = glm::normalize(rayDirection);
 
-    return 0xff000000 | (g << 8) | r;
+    // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
+    // where
+    // a = ray origin
+    // b = ray direction
+    // r = radius
+    // t = hit distance
+
+    float a = glm::dot(rayDirection, rayDirection);
+    float b = 2.0f * glm::dot(rayOrigin, rayDirection);
+    float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
+
+    // Quadratic forumula discriminant:
+    // b^2 - 4ac
+
+    float discriminant = b * b - 4.0f * a * c;
+    if (discriminant < 0.0f)
+        return glm::vec4(0, 0, 0, 1);
+
+    // Quadratic formula:
+    // (-b +- sqrt(discriminant)) / 2a
+
+    float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
+    float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a); // Second hit distance (currently unused)
+
+    glm::vec3 hitPoint = rayOrigin + rayDirection * closestT;
+    glm::vec3 normal = glm::normalize(hitPoint);
+
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
+    float lightIntensity = glm::max(glm::dot(normal, -lightDir), 0.0f); // == cos(angle)
+
+    glm::vec3 sphereColor(1, 0, 1);
+    sphereColor *= lightIntensity;
+    return glm::vec4(sphereColor, 1.0f);
 }
 
 void Render(int width, int height)
@@ -67,8 +88,12 @@ void Render(int width, int height)
     {
         for (int x = 0; x < width; x++)
         {
-            // data[y * width + x] = PerPixel(glm::vec2(x, y));
-            data[y * width + x] = PerPixel(glm::vec2(x / (float)width, y / (float)height));
+            glm::vec2 coord = glm::vec2(x / (float)width, y / (float)height);
+            coord = coord * 2.0f - 1.0f;
+
+            glm::vec4 color = PerPixel(coord);
+			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+			data[y * width + x] = Utils::ConvertToRGBA(color);
         }
     }
     // Subir los datos a la textura
@@ -106,32 +131,21 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    // glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(1); // Enable vsync
     // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     IMGUI_CHECKVERSION();
 
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    unsigned int fragmentShaderOrange = glCreateShader(GL_FRAGMENT_SHADER); // the first fragment shader that outputs the color orange
-    unsigned int shaderProgram = glCreateProgram();
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    glShaderSource(fragmentShaderOrange, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShaderOrange);
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShaderOrange);
-    glLinkProgram(shaderProgram);
-
     // Inicializa ImGui
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
+    ImGui_ImplOpenGL3_Init("#version 330");
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
 
-    // FrameBuffer sceneBuffer(1280, 720);
+    processInput(window);
 
     // Bucle principal
     while (!glfwWindowShouldClose(window))
@@ -139,7 +153,6 @@ int main()
         Render(sceneWindowWidth, sceneWindowHeight);
         // Procesa los eventos de GLFW
         glfwPollEvents();
-        processInput(window);
 
         // Procesa los eventos de ImGui
         ImGui_ImplOpenGL3_NewFrame();
