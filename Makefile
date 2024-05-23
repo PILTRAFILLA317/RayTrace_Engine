@@ -1,22 +1,6 @@
-#
-# Cross Platform Makefile
-# Compatible with MSYS2/MINGW, Ubuntu 14.04.1 and Mac OS X
-#
-# You will need GLFW (http://www.glfw.org):
-# Linux:
-#   apt-get install libglfw-dev
-# Mac OS X:
-#   brew install glfw
-# MSYS2:
-#   pacman -S --noconfirm --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-glfw
-#
-
-#CXX = g++
-#CXX = clang++
-
 EXE = BriarEngine
 IMGUI_DIR = ./clientApp/imgui
-INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src -I./clientApp/glad/KHR -I./clientApp/glad/include -I./rayTracer/src -I./clientApp/includes
+INC_DIR = -I./clientApp/imgui -I./clientApp/imgui/backends -I./clientApp/src -I./clientApp/glad/KHR -I./clientApp/glad/include -I./rayTracer/includes -I./clientApp/includes
 SRC_DIR = ./clientApp/src
 RT_DIR = ./rayTracer/src
 GLAD_DIR = ./clientApp/glad/src
@@ -30,7 +14,7 @@ UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
 CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
-CXXFLAGS += -O3 #-g -Wall -Wformat -fsanitize=address
+CXXFLAGS += -O3 -g -Wall -Wformat -fsanitize=address
 CXXFLAGS += $(INC_DIR)
 LIBS =
 
@@ -103,3 +87,7 @@ $(EXE): $(OBJS)
 
 clean:
 	rm -f $(EXE) $(OBJS)
+
+re:
+	make clean
+	make all

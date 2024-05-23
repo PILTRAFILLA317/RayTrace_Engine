@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FrameBuffer.h"
-#include "Input.h"
 
 #include "../glfw/include/GLFW/glfw3.h"
 #include <glm/glm.hpp>
@@ -11,3 +10,4 @@
 
 #include <iostream>
 #include <OpenGL/gl3.h>
+#include "Camera.h"

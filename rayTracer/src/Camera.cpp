@@ -1,13 +1,14 @@
 #include "Camera.h"
+#include "Window.h"
+#include <iostream>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include "Input.h"
 
-Camera::Camera(float verticalFOV, float nearClip, float farClip)
-    : VerticalFOV(verticalFOV), NearClip(nearClip), FarClip(farClip)
+Camera::Camera(float verticalFOV, float nearClip, float farClip, Window &window)
+    : VerticalFOV(verticalFOV), NearClip(nearClip), FarClip(farClip), newWindow(window)
 {
     ForwardDirection = glm::vec3(0, 0, -1);
     Position = glm::vec3(0, 0, 3);
@@ -15,17 +16,17 @@ Camera::Camera(float verticalFOV, float nearClip, float farClip)
 
 void Camera::OnUpdate(float ts)
 {
-    glm::vec2 mousePos = Input::GetMousePosition();
+    glm::vec2 mousePos = newWindow.GetMousePosition();
     glm::vec2 delta = (mousePos - LastMousePosition) * 0.002f;
     LastMousePosition = mousePos;
 
-    if (!Input::IsMouseButtonDown(MouseButton::Right))
+    if (!newWindow.IsMouseButtonDown(MouseButton::Right))
     {
-        Input::SetCursorMode(CursorMode::Normal);
+        newWindow.SetCursorMode(CursorMode::Normal);
         return;
     }
 
-    Input::SetCursorMode(CursorMode::Locked);
+    newWindow.SetCursorMode(CursorMode::Locked);
 
     bool moved = false;
 
@@ -35,35 +36,35 @@ void Camera::OnUpdate(float ts)
     const glm::vec3 upDirection(upX, upY, upZ);
     glm::vec3 rightDirection = glm::cross(ForwardDirection, upDirection);
 
-    float speed = 5.0f;
+    float speed = 0.0005f;
 
     // Movement
-    if (Input::IsKeyDown(KeyCode::W))
+    if (newWindow.IsKeyDown(KeyCode::W))
     {
         Position += ForwardDirection * speed * ts;
         moved = true;
     }
-    else if (Input::IsKeyDown(KeyCode::S))
+    else if (newWindow.IsKeyDown(KeyCode::S))
     {
         Position -= ForwardDirection * speed * ts;
         moved = true;
     }
-    if (Input::IsKeyDown(KeyCode::A))
+    if (newWindow.IsKeyDown(KeyCode::A))
     {
         Position -= rightDirection * speed * ts;
         moved = true;
     }
-    else if (Input::IsKeyDown(KeyCode::D))
+    else if (newWindow.IsKeyDown(KeyCode::D))
     {
         Position += rightDirection * speed * ts;
         moved = true;
     }
-    if (Input::IsKeyDown(KeyCode::Q))
+    if (newWindow.IsKeyDown(KeyCode::Q))
     {
         Position -= upDirection * speed * ts;
         moved = true;
     }
-    else if (Input::IsKeyDown(KeyCode::E))
+    else if (newWindow.IsKeyDown(KeyCode::E))
     {
         Position += upDirection * speed * ts;
         moved = true;

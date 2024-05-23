@@ -1,12 +1,15 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "Window.h"
 #include <vector>
+
+class Window;
 
 class Camera
 {
 public:
-	Camera(float verticalFOV, float nearClip, float farClip);
+	Camera(float verticalFOV, float nearClip, float farClip, Window &window);
 
 	void OnUpdate(float ts);
 	void OnResize(glm::uint32 width, glm::uint32 height);
@@ -27,6 +30,8 @@ private:
 	void RecalculateView();
 	void RecalculateRayDirections();
 private:
+	Window &newWindow;
+
 	glm::mat4 Projection{ 1.0f };
 	glm::mat4 View{ 1.0f };
 	glm::mat4 InverseProjection{ 1.0f };
