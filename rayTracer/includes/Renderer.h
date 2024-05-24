@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Window.h"
 #include "Ray.h"
+#include "Scene.h"
 
 class Window;
 
@@ -21,6 +22,8 @@ private:
     GLuint renderImage = 0;
     float sceneWindowWidth = 1280;
     float sceneWindowHeight = 720;
+    
+    Window &window;
 
     Camera *camera;
 

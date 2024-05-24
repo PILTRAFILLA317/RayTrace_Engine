@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "imgui.h"
 #include <OpenGL/gl3.h>
+#include "Scene.h"
 
 class Renderer;
 
@@ -49,6 +50,8 @@ private:
     Renderer *renderer;
 
 public:
+    Scene scene;
+
     Window(int width, int height, const std::string &title);
     ~Window();
 

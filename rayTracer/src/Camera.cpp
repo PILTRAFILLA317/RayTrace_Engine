@@ -36,7 +36,7 @@ void Camera::OnUpdate(float ts)
     const glm::vec3 upDirection(upX, upY, upZ);
     glm::vec3 rightDirection = glm::cross(ForwardDirection, upDirection);
 
-    float speed = 0.0005f;
+    float speed = 0.0003f;
 
     // Movement
     if (newWindow.IsKeyDown(KeyCode::W))
@@ -59,12 +59,12 @@ void Camera::OnUpdate(float ts)
         Position += rightDirection * speed * ts;
         moved = true;
     }
-    if (newWindow.IsKeyDown(KeyCode::Q))
+    if (newWindow.IsKeyDown(KeyCode::E))
     {
         Position -= upDirection * speed * ts;
         moved = true;
     }
-    else if (newWindow.IsKeyDown(KeyCode::E))
+    else if (newWindow.IsKeyDown(KeyCode::Q))
     {
         Position += upDirection * speed * ts;
         moved = true;

@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Renderer.h"
+#include <glm/gtc/type_ptr.hpp>
 
 float Window::GetTime()
 {
@@ -9,6 +10,11 @@ float Window::GetTime()
 Window::Window(int width, int height, const std::string &title)
     : width(width), height(height), title(title), renderer(nullptr), window(nullptr)
 {
+    Sphere sphere;
+    sphere.Position = glm::vec3(0.0f, 0.0f, -5.0f);
+    sphere.Radius = 1.0f;
+    sphere.Albedo = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
     if (!glfwInit())
     {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -35,6 +41,8 @@ Window::Window(int width, int height, const std::string &title)
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    scene.Spheres.push_back(sphere);
 
     createRenderer();
 }
@@ -65,10 +73,19 @@ void Window::mainLoop()
         // Renderiza la ventana de ImGui
         {
             ImGui::Begin("Settings");
-            // if (ImGui::Button("Render"))
-            // {
-            //     Render(sceneWindowWidth, sceneWindowHeight);
-            // }
+            for (size_t i = 0; i < scene.Spheres.size(); i++)
+            {
+                ImGui::PushID(i);
+
+                Sphere &sphere = scene.Spheres[i];
+                ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
+                ImGui::DragFloat("Radius", &sphere.Radius, 0.1f);
+                ImGui::ColorEdit3("Albedo", glm::value_ptr(sphere.Albedo));
+
+                ImGui::Separator();
+
+                ImGui::PopID();
+            }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::Text("Mouse Position: (%.1f, %.1f)", io.MousePos.x, io.MousePos.y);
             ImGui::End();
