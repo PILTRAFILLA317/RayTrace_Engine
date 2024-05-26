@@ -25,7 +25,8 @@ private:
     
     Window &window;
 
-    Camera *camera;
+    Scene *activeScene;
+    Camera *activeCamera;
 
 public:
     Renderer(Window &window);
@@ -33,11 +34,22 @@ public:
 
     void Update(float ts);
 
-    void Render(const Camera &camera);
+    void Render(Scene& scene, Camera& camera);
 
-    glm::vec4 TraceRay(const Ray& ray);
+    struct HitPayload
+	{
+		float HitDistance;
+		glm::vec3 WorldPosition;
+		glm::vec3 WorldNormal;
 
-    glm::vec4 PerPixel(glm::vec2 coord);
+		int ObjectIndex;
+	};
+
+	glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
+
+	HitPayload TraceRay(const Ray& ray);
+	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
+	HitPayload Miss(const Ray& ray);
 
     inline float GetSceneWindowWidth()
     {
