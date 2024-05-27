@@ -1,8 +1,11 @@
 #include "Renderer.h"
 #include "Window.h"
+#include <random>
 
 namespace Utils
 {
+    static std::mt19937 RandomEngine;
+    static std::uniform_int_distribution<std::mt19937::result_type> Distribution;
 
     static glm::uint32 ConvertToRGBA(const glm::vec4 &color)
     {
@@ -13,6 +16,16 @@ namespace Utils
 
         glm::uint32 result = (a << 24) | (b << 16) | (g << 8) | r;
         return result;
+    }
+
+    static float Float()
+    {
+        return (float)Distribution(RandomEngine) / (float)std::numeric_limits<uint32_t>::max();
+    }
+
+    static glm::vec3 RandomVec3(float min, float max)
+    {
+        return glm::vec3(Float() * (max - min) + min, Float() * (max - min) + min, Float() * (max - min) + min);
     }
 
 }
@@ -51,13 +64,13 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
     glm::vec3 color(0.0f);
     float multiplier = 1.0f;
 
-    int bounces = 2;
+    int bounces = 5;
     for (int i = 0; i < bounces; i++)
     {
         Renderer::HitPayload payload = TraceRay(ray);
         if (payload.HitDistance < 0.0f)
         {
-            glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            glm::vec3 skyColor = glm::vec3(0.6f, 0.7f, 0.9f);
             color += skyColor * multiplier;
             break;
         }
@@ -66,14 +79,17 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
         float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
 
         const Sphere &sphere = activeScene->Spheres[payload.ObjectIndex];
-        glm::vec3 sphereColor = sphere.Albedo;
+        const Material& material = activeScene->Materials[sphere.MaterialIndex];
+
+		glm::vec3 sphereColor = material.Albedo;
         sphereColor *= lightIntensity;
         color += sphereColor * multiplier;
 
-        multiplier *= 0.7f;
+        multiplier *= 0.5f;
 
         ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-        ray.Direction = glm::reflect(ray.Direction, payload.WorldNormal);
+        ray.Direction = glm::reflect(ray.Direction,
+			payload.WorldNormal + material.Roughness * Utils::RandomVec3(-0.5f, 0.5f));
     }
 
     return glm::vec4(color, 1.0f);
@@ -87,7 +103,6 @@ Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
     // b = ray direction
     // r = radius
     // t = hit distance
-
 
     int closestSphere = -1;
     float hitDistance = std::numeric_limits<float>::max();
@@ -130,7 +145,7 @@ void Renderer::Render(Scene &scene, Camera &camera)
 {
     activeScene = &scene;
     activeCamera = &camera;
-    // std::cout << "Rendering image with size: " << width << "x" << height << std::endl;
+
     if (renderImage != 0)
     {
         glDeleteTextures(1, &renderImage);

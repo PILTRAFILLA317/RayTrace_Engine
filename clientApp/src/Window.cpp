@@ -10,10 +10,15 @@ float Window::GetTime()
 Window::Window(int width, int height, const std::string &title)
     : width(width), height(height), title(title), renderer(nullptr), window(nullptr)
 {
-    Sphere sphere;
-    sphere.Position = glm::vec3(0.0f, 0.0f, -5.0f);
-    sphere.Radius = 1.0f;
-    sphere.Albedo = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    Material pinkSphere;
+    pinkSphere.Albedo = {1.0f, 0.0f, 1.0f};
+    pinkSphere.Roughness = 0.0f;
+    scene.Materials.push_back(pinkSphere);
+
+    Material blueSphere;
+    blueSphere.Albedo = {0.2f, 0.3f, 1.0f};
+    blueSphere.Roughness = 0.1f;
+    scene.Materials.push_back(blueSphere);
 
     if (!glfwInit())
     {
@@ -42,8 +47,6 @@ Window::Window(int width, int height, const std::string &title)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
-    scene.Spheres.push_back(sphere);
-
     createRenderer();
 }
 
@@ -71,6 +74,7 @@ void Window::mainLoop()
         ImGui::DockSpaceOverViewport();
 
         ImGui::Begin("Adjustments");
+        ImGui::Text("Spheres");
         for (size_t i = 0; i < scene.Spheres.size(); i++)
         {
             ImGui::PushID(i);
@@ -78,7 +82,7 @@ void Window::mainLoop()
             Sphere &sphere = scene.Spheres[i];
             ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
             ImGui::DragFloat("Radius", &sphere.Radius, 0.1f);
-            ImGui::ColorEdit3("Albedo", glm::value_ptr(sphere.Albedo));
+            ImGui::DragInt("Material", &sphere.MaterialIndex, 1.0f, 0, (int)scene.Materials.size() - 1);
 
             ImGui::Separator();
 
@@ -89,6 +93,21 @@ void Window::mainLoop()
         {
             Sphere sphere;
             scene.Spheres.push_back(sphere);
+        }
+
+        ImGui::Text("Materials");
+        for (size_t i = 0; i < scene.Materials.size(); i++)
+        {
+            ImGui::PushID(i);
+
+            Material &material = scene.Materials[i];
+            ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
+            ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f);
+            ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f);
+
+            ImGui::Separator();
+
+            ImGui::PopID();
         }
         ImGui::End();
 
