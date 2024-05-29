@@ -40,8 +40,8 @@ public:
 
 private:
     GLuint renderImage = 0;
-    int sceneWindowWidth = 1280;
-    int sceneWindowHeight = 720;
+    // int sceneWindowWidth = 1280;
+    // int sceneWindowHeight = 720;
 
     ImageData image;
 
@@ -72,11 +72,11 @@ public:
 
     inline float GetSceneWindowWidth()
     {
-        return sceneWindowWidth;
+        return image.width;
     }
     inline float GetSceneWindowHeight()
     {
-        return sceneWindowHeight;
+        return image.height;
     }
     inline GLuint GetRenderImage()
     {
@@ -85,11 +85,11 @@ public:
 
     void setSceneWindowWidth(float width)
     {
-        sceneWindowWidth = width;
+        image.width = width;
     }
     void setSceneWindowHeight(float height)
     {
-        sceneWindowHeight = height;
+        image.height = height;
     }
 
     void ResetFrameIndex() { frameIndex = 1; }
