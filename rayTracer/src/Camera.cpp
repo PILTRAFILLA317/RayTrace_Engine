@@ -14,7 +14,7 @@ Camera::Camera(float verticalFOV, float nearClip, float farClip, Window &window)
     Position = glm::vec3(0, 0, 6);
 }
 
-void Camera::OnUpdate(float ts)
+bool Camera::OnUpdate(float ts)
 {
     glm::vec2 mousePos = newWindow.GetMousePosition();
     glm::vec2 delta = (mousePos - LastMousePosition) * 0.002f;
@@ -23,7 +23,7 @@ void Camera::OnUpdate(float ts)
     if (!newWindow.IsMouseButtonDown(MouseButton::Right))
     {
         newWindow.SetCursorMode(CursorMode::Normal);
-        return;
+        return false;
     }
 
     newWindow.SetCursorMode(CursorMode::Locked);
@@ -88,6 +88,7 @@ void Camera::OnUpdate(float ts)
         RecalculateView();
         RecalculateRayDirections();
     }
+    return moved;
 }
 
 void Camera::OnResize(uint32_t width, uint32_t height)

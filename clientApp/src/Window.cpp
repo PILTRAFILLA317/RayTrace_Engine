@@ -65,8 +65,6 @@ void Window::mainLoop()
         // Procesa los eventos de GLFW
         glfwPollEvents();
 
-        renderer->Update(io.Framerate);
-
         // Procesa los eventos de ImGui
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -114,6 +112,10 @@ void Window::mainLoop()
         // Renderiza la ventana de ImGui
         ImGui::Begin("Settings");
         {
+            ImGui::Checkbox("Accumulate", &renderer->GetSettings().Accumulate);
+
+            if (ImGui::Button("Reset"))
+                renderer->ResetFrameIndex();
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::Text("Mouse Position: (%.1f, %.1f)", io.MousePos.x, io.MousePos.y);
         }
@@ -121,8 +123,8 @@ void Window::mainLoop()
 
         ImGui::Begin("Scene");
         {
-            renderer->setSceneWindowWidth(ImGui::GetContentRegionAvail().x);
-            renderer->setSceneWindowHeight(ImGui::GetContentRegionAvail().y);
+            renderer->OnResize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+            renderer->Update(io.Framerate);
             ImGui::Image((void *)(intptr_t)renderer->GetRenderImage(), ImVec2(renderer->GetSceneWindowWidth(), renderer->GetSceneWindowHeight()), ImVec2(0, 1), ImVec2(1, 0));
             ImGui::End();
         }

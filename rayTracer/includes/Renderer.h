@@ -18,38 +18,57 @@ class Camera;
 
 class Renderer
 {
+public:
+    struct Settings
+    {
+        bool Accumulate = true;
+    };
+    struct HitPayload
+    {
+        float HitDistance;
+        glm::vec3 WorldPosition;
+        glm::vec3 WorldNormal;
+
+        int ObjectIndex;
+    };
+    struct ImageData
+    {
+        int width;
+        int height;
+        glm::uint32 *data;
+    };
+
 private:
     GLuint renderImage = 0;
-    float sceneWindowWidth = 1280;
-    float sceneWindowHeight = 720;
-    
+    int sceneWindowWidth = 1280;
+    int sceneWindowHeight = 720;
+
+    ImageData image;
+
     Window &window;
 
     Scene *activeScene;
     Camera *activeCamera;
+
+    Settings settings;
+
+    glm::vec4 *accumulationData = nullptr;
+
+    uint32_t frameIndex = 1;
 
 public:
     Renderer(Window &window);
     ~Renderer();
 
     void Update(float ts);
+    void OnResize(uint32_t width, uint32_t height);
+    void Render(Scene &scene, Camera &camera);
 
-    void Render(Scene& scene, Camera& camera);
+    glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
 
-    struct HitPayload
-	{
-		float HitDistance;
-		glm::vec3 WorldPosition;
-		glm::vec3 WorldNormal;
-
-		int ObjectIndex;
-	};
-
-	glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
-
-	HitPayload TraceRay(const Ray& ray);
-	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
-	HitPayload Miss(const Ray& ray);
+    HitPayload TraceRay(const Ray &ray);
+    HitPayload ClosestHit(const Ray &ray, float hitDistance, int objectIndex);
+    HitPayload Miss(const Ray &ray);
 
     inline float GetSceneWindowWidth()
     {
@@ -72,4 +91,7 @@ public:
     {
         sceneWindowHeight = height;
     }
+
+    void ResetFrameIndex() { frameIndex = 1; }
+    Settings &GetSettings() { return settings; }
 };

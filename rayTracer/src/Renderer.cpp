@@ -33,16 +33,18 @@ namespace Utils
 Renderer::Renderer(Window &window) : window(window)
 {
     renderImage = 0;
-    sceneWindowWidth = 1280;
-    sceneWindowHeight = 720;
+    image.width = 1280;
+    image.height = 720;
     activeCamera = new Camera(45.0f, 0.1f, 100.0f, window);
     activeScene = &window.scene;
 }
 
 void Renderer::Update(float ts)
 {
-    activeCamera->OnResize(sceneWindowWidth, sceneWindowHeight);
-    activeCamera->OnUpdate(ts);
+    activeCamera->OnResize(image.width, image.height);
+    // activeCamera->OnUpdate(ts);
+    if (activeCamera->OnUpdate(ts))
+			ResetFrameIndex();
     Render(*activeScene, *activeCamera);
 }
 
@@ -59,7 +61,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 {
     Ray ray;
     ray.Origin = activeCamera->GetPosition();
-    ray.Direction = activeCamera->GetRayDirections()[x + y * sceneWindowWidth];
+    ray.Direction = activeCamera->GetRayDirections()[x + y * image.width];
 
     glm::vec3 color(0.0f);
     float multiplier = 1.0f;
@@ -79,9 +81,9 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
         float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
 
         const Sphere &sphere = activeScene->Spheres[payload.ObjectIndex];
-        const Material& material = activeScene->Materials[sphere.MaterialIndex];
+        const Material &material = activeScene->Materials[sphere.MaterialIndex];
 
-		glm::vec3 sphereColor = material.Albedo;
+        glm::vec3 sphereColor = material.Albedo;
         sphereColor *= lightIntensity;
         color += sphereColor * multiplier;
 
@@ -89,7 +91,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
         ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
         ray.Direction = glm::reflect(ray.Direction,
-			payload.WorldNormal + material.Roughness * Utils::RandomVec3(-0.5f, 0.5f));
+                                     payload.WorldNormal + material.Roughness * Utils::RandomVec3(-0.5f, 0.5f));
     }
 
     return glm::vec4(color, 1.0f);
@@ -141,6 +143,17 @@ Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
     return ClosestHit(ray, hitDistance, closestSphere);
 }
 
+void Renderer::OnResize(uint32_t width, uint32_t height)
+{
+    if (width == image.width && height == image.height)
+        return;
+    image.width = width;
+    image.height = height;
+
+    delete[] accumulationData;
+    accumulationData = new glm::vec4[width * height];
+}
+
 void Renderer::Render(Scene &scene, Camera &camera)
 {
     activeScene = &scene;
@@ -153,22 +166,33 @@ void Renderer::Render(Scene &scene, Camera &camera)
     glGenTextures(1, &renderImage);
     glBindTexture(GL_TEXTURE_2D, renderImage);
 
+    if (frameIndex == 1){
+        memset(accumulationData, 0, image.width * image.height * sizeof(glm::vec4));
+    }
+
     Ray ray;
     // Generar los datos de la imagen
     ray.Origin = camera.GetPosition();
-    glm::uint32 *data = new glm::uint32[(int)sceneWindowWidth * (int)sceneWindowHeight];
+    glm::uint32 *data = new glm::uint32[image.width * image.height];
 
-    for (glm::uint32 y = 0; y < sceneWindowHeight; y++)
+    for (glm::uint32 y = 0; y < image.height; y++)
     {
-        for (glm::uint32 x = 0; x < sceneWindowWidth; x++)
+        for (glm::uint32 x = 0; x < image.width; x++)
         {
             glm::vec4 color = PerPixel(x, y);
-            color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-            data[y * (int)sceneWindowWidth + x] = Utils::ConvertToRGBA(color);
+            // color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+            // data[y * image.width + x] = Utils::ConvertToRGBA(color);
+            accumulationData[x + y * image.width] += color;
+
+            glm::vec4 accumulatedColor = accumulationData[x + y * image.width];
+            accumulatedColor /= (float)frameIndex;
+
+            accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+            data[x + y * image.width] = Utils::ConvertToRGBA(accumulatedColor);
         }
     }
     // Subir los datos a la textura
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sceneWindowWidth, sceneWindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     // Configurar parámetros de la textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -177,6 +201,10 @@ void Renderer::Render(Scene &scene, Camera &camera)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     delete[] data;
+    if (settings.Accumulate)
+        frameIndex++;
+    else
+        frameIndex = 1;
 }
 
 Renderer::HitPayload Renderer::ClosestHit(const Ray &ray, float hitDistance, int objectIndex)
