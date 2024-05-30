@@ -1,10 +1,13 @@
 #include "Renderer.h"
 #include "Window.h"
 #include <random>
+#include <execution>
+#include <algorithm>
+#include <tbb/parallel_for_each.h>
 
 namespace Utils
 {
-    static std::mt19937 RandomEngine;
+    static thread_local std::mt19937 RandomEngine;
     static std::uniform_int_distribution<std::mt19937::result_type> Distribution;
 
     static glm::uint32 ConvertToRGBA(const glm::vec4 &color)
@@ -20,7 +23,7 @@ namespace Utils
 
     static float Float()
     {
-        return (float)Distribution(RandomEngine) / (float)std::numeric_limits<uint32_t>::max();
+        return (float)Distribution(RandomEngine) / (float)std::numeric_limits<glm::uint32>::max();
     }
 
     static glm::vec3 RandomVec3(float min, float max)
@@ -44,7 +47,7 @@ void Renderer::Update(float ts)
     activeCamera->OnResize(image.width, image.height);
     // activeCamera->OnUpdate(ts);
     if (activeCamera->OnUpdate(ts))
-			ResetFrameIndex();
+        ResetFrameIndex();
     Render(*activeScene, *activeCamera);
 }
 
@@ -57,7 +60,7 @@ Renderer::~Renderer()
     delete activeCamera;
 }
 
-glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
+glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
 {
     Ray ray;
     ray.Origin = activeCamera->GetPosition();
@@ -143,7 +146,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
     return ClosestHit(ray, hitDistance, closestSphere);
 }
 
-void Renderer::OnResize(uint32_t width, uint32_t height)
+void Renderer::OnResize(glm::uint32 width, glm::uint32 height)
 {
     if (width == image.width && height == image.height)
         return;
@@ -152,6 +155,13 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
     delete[] accumulationData;
     accumulationData = new glm::vec4[width * height];
+
+    hIter.resize(width);
+    vIter.resize(height);
+    for (glm::uint32 i = 0; i < width; i++)
+        hIter[i] = i;
+    for (glm::uint32 i = 0; i < height; i++)
+        vIter[i] = i;
 }
 
 void Renderer::Render(Scene &scene, Camera &camera)
@@ -166,7 +176,8 @@ void Renderer::Render(Scene &scene, Camera &camera)
     glGenTextures(1, &renderImage);
     glBindTexture(GL_TEXTURE_2D, renderImage);
 
-    if (frameIndex == 1){
+    if (frameIndex == 1)
+    {
         memset(accumulationData, 0, image.width * image.height * sizeof(glm::vec4));
     }
 
@@ -175,11 +186,34 @@ void Renderer::Render(Scene &scene, Camera &camera)
     ray.Origin = camera.GetPosition();
     glm::uint32 *data = new glm::uint32[image.width * image.height];
 
+#define MT 1
+#if MT
+    tbb::parallel_for_each(vIter.begin(), vIter.end(),
+                           [this, data](uint32_t y)
+                           {
+                               tbb::parallel_for_each(hIter.begin(), hIter.end(),
+                                                      [this, y, &data](uint32_t x)
+                                                      {
+                                                          glm::vec4 color = RayGun(x, y);
+                                                          // color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+                                                          // data[y * image.width + x] = Utils::ConvertToRGBA(color);
+                                                          accumulationData[x + y * image.width] += color;
+
+                                                          glm::vec4 accumulatedColor = accumulationData[x + y * image.width];
+                                                          accumulatedColor /= (float)frameIndex;
+
+                                                          accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+                                                          data[x + y * image.width] = Utils::ConvertToRGBA(accumulatedColor);
+                                                      });
+                           });
+
+#else
+
     for (glm::uint32 y = 0; y < image.height; y++)
     {
         for (glm::uint32 x = 0; x < image.width; x++)
         {
-            glm::vec4 color = PerPixel(x, y);
+            glm::vec4 color = RayGun(x, y);
             // color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
             // data[y * image.width + x] = Utils::ConvertToRGBA(color);
             accumulationData[x + y * image.width] += color;
@@ -191,6 +225,7 @@ void Renderer::Render(Scene &scene, Camera &camera)
             data[x + y * image.width] = Utils::ConvertToRGBA(accumulatedColor);
         }
     }
+#endif
     // Subir los datos a la textura
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 

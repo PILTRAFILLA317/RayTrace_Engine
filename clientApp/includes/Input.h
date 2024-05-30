@@ -1,6 +1,7 @@
 // Input.h
 #pragma once
 
+#define GL_SILENCE_DEPRECATION
 #include "../glfw/include/GLFW/glfw3.h"
 #include <glm/glm.hpp>
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#define GL_SILENCE_DEPRECATION
 #include <string>
 #include <vector>
 #include <iostream>

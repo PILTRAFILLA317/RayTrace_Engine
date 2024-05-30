@@ -1,5 +1,6 @@
 #pragma once
 
+#define GL_SILENCE_DEPRECATION
 #include <iostream>
 #include "../glfw/include/GLFW/glfw3.h"
 #include <OpenGL/gl3.h>
@@ -54,17 +55,19 @@ private:
 
     glm::vec4 *accumulationData = nullptr;
 
-    uint32_t frameIndex = 1;
+    glm::uint32 frameIndex = 1;
+
+    std::vector<glm::uint32> hIter, vIter;
 
 public:
     Renderer(Window &window);
     ~Renderer();
 
     void Update(float ts);
-    void OnResize(uint32_t width, uint32_t height);
+    void OnResize(glm::uint32 width, glm::uint32 height);
     void Render(Scene &scene, Camera &camera);
 
-    glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
+    glm::vec4 RayGun(glm::uint32 x, glm::uint32 y); // RayGen
 
     HitPayload TraceRay(const Ray &ray);
     HitPayload ClosestHit(const Ray &ray, float hitDistance, int objectIndex);

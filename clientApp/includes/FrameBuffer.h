@@ -1,4 +1,6 @@
 #pragma once
+
+#define GL_SILENCE_DEPRECATION
 #include <iostream>
 #include <OpenGL/gl3.h>
 // #include <glm/glm.hpp>

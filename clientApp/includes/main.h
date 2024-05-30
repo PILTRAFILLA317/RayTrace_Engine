@@ -1,5 +1,6 @@
 #pragma once
 
+#define GL_SILENCE_DEPRECATION
 #include "FrameBuffer.h"
 
 #include "../glfw/include/GLFW/glfw3.h"
