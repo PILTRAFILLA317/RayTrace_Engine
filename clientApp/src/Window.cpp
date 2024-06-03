@@ -73,25 +73,26 @@ void Window::mainLoop()
         ImGui::DockSpaceOverViewport();
 
         ImGui::Begin("Adjustments");
-        ImGui::Text("Spheres");
-        for (size_t i = 0; i < scene.Spheres.size(); i++)
+        ImGui::Text("Shapes");
+        for (size_t i = 0; i < scene.Shapes.size(); i++)
         {
             ImGui::PushID(i);
 
-            Sphere &sphere = scene.Spheres[i];
-            ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
-            ImGui::DragFloat("Radius", &sphere.Radius, 0.1f);
-            ImGui::DragInt("Material", &sphere.MaterialIndex, 1.0f, 0, (int)scene.Materials.size() - 1);
+            Shape &shape = *scene.Shapes[i];
+            ImGui::DragFloat3("Position", glm::value_ptr(shape.Position), 0.1f);
+            // ImGui::DragFloat("Radius", &shape.Radius, 0.1f);
+            ImGui::DragInt("Material", &shape.MaterialIndex, 1.0f, 0, (int)scene.Materials.size() - 1);
 
             ImGui::Separator();
 
             ImGui::PopID();
         }
-        ImGui::Button("Add Sphere");
+        ImGui::Button("Add Shape");
         if (ImGui::IsItemClicked())
         {
-            Sphere sphere;
-            scene.Spheres.push_back(sphere);
+            // Sphere sphere = Sphere();
+            std::shared_ptr<Shape> sphere = std::make_shared<Sphere>();
+            scene.Shapes.push_back(sphere);
         }
 
         ImGui::Text("Materials");

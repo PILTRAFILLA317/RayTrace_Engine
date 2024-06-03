@@ -80,15 +80,15 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
             break;
         }
 
-        glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
-        float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
+        // glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
+        // float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
 
-        const Sphere &sphere = activeScene->Spheres[payload.ObjectIndex];
-        const Material &material = activeScene->Materials[sphere.MaterialIndex];
+        const Shape &shape = *activeScene->Shapes[payload.ObjectIndex];
+        const Material &material = activeScene->Materials[shape.GetMaterialIndex()];
 
-        glm::vec3 sphereColor = material.Albedo;
-        sphereColor *= lightIntensity;
-        color += sphereColor * multiplier;
+        glm::vec3 sphapeColor = material.Albedo;
+        // sphapeColor *= lightIntensity;
+        color += sphapeColor * multiplier;
 
         multiplier *= 0.5f;
 
@@ -109,41 +109,24 @@ Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
     // r = radius
     // t = hit distance
 
-    int closestSphere = -1;
+    int closestShape = -1;
     float hitDistance = std::numeric_limits<float>::max();
 
-    for (size_t i = 0; i < activeScene->Spheres.size(); i++)
+    for (size_t i = 0; i < activeScene->Shapes.size(); i++)
     {
-        const Sphere &sphere = activeScene->Spheres[i];
-        glm::vec3 origin = ray.Origin - sphere.Position;
-
-        float a = glm::dot(ray.Direction, ray.Direction);
-        float b = 2.0f * glm::dot(origin, ray.Direction);
-        float c = glm::dot(origin, origin) - sphere.Radius * sphere.Radius;
-
-        // Quadratic forumula discriminant:
-        // b^2 - 4ac
-
-        float discriminant = b * b - 4.0f * a * c;
-        if (discriminant < 0.0f)
-            continue;
-
-        // Quadratic formula:
-        // (-b +- sqrt(discriminant)) / 2a
-
-        // float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a); // Second hit distance (currently unused)
-        float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
-        if (closestT > 0.0f && closestT < hitDistance)
+        const Shape &shape = *activeScene->Shapes[i];
+        float distance = shape.GetClosestHit(ray);
+        if (distance < hitDistance)
         {
-            hitDistance = closestT;
-            closestSphere = (int)i;
+            hitDistance = distance;
+            closestShape = (int)i;
         }
     }
 
-    if (closestSphere < 0)
+    if (closestShape < 0)
         return Miss(ray);
 
-    return ClosestHit(ray, hitDistance, closestSphere);
+    return ClosestHit(ray, hitDistance, closestShape);
 }
 
 void Renderer::OnResize(glm::uint32 width, glm::uint32 height)
@@ -248,13 +231,13 @@ Renderer::HitPayload Renderer::ClosestHit(const Ray &ray, float hitDistance, int
     payload.HitDistance = hitDistance;
     payload.ObjectIndex = objectIndex;
 
-    const Sphere &closestSphere = activeScene->Spheres[objectIndex];
+    const Shape &closestShape = *activeScene->Shapes[objectIndex];
 
-    glm::vec3 origin = ray.Origin - closestSphere.Position;
+    glm::vec3 origin = ray.Origin - closestShape.GetPosition();
     payload.WorldPosition = origin + ray.Direction * hitDistance;
     payload.WorldNormal = glm::normalize(payload.WorldPosition);
 
-    payload.WorldPosition += closestSphere.Position;
+    payload.WorldPosition += closestShape.GetPosition();
 
     return payload;
 }
