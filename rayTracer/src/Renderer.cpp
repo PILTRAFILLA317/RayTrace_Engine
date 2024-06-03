@@ -77,17 +77,19 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
         {
             glm::vec3 skyColor = glm::vec3(0.6f, 0.7f, 0.9f);
             color += skyColor * multiplier;
+            if (i > 1)
+                std::cout << "skyColor: " << i << std::endl;
             break;
         }
 
-        // glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
-        // float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
+        glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
+        float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
 
         const Shape &shape = *activeScene->Shapes[payload.ObjectIndex];
         const Material &material = activeScene->Materials[shape.GetMaterialIndex()];
 
         glm::vec3 sphapeColor = material.Albedo;
-        // sphapeColor *= lightIntensity;
+        sphapeColor *= lightIntensity;
         color += sphapeColor * multiplier;
 
         multiplier *= 0.5f;
@@ -116,7 +118,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
     {
         const Shape &shape = *activeScene->Shapes[i];
         float distance = shape.GetClosestHit(ray);
-        if (distance < hitDistance)
+        if (distance < hitDistance && distance > 0.0f)
         {
             hitDistance = distance;
             closestShape = (int)i;
