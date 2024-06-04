@@ -22,7 +22,7 @@ class Renderer
 public:
     struct Settings
     {
-        bool Accumulate = true;
+        bool Accumulate = false;
     };
     struct HitPayload
     {

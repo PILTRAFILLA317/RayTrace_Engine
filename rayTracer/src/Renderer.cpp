@@ -72,17 +72,24 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
     float multiplier = 1.0f;
 
     int bounces = 5;
+    float shadowBias = 0.0001f; // Pequeño desplazamiento para evitar autointersección
+    float shadowRandomness = 0.1f; // Ajusta la aleatoriedad de la sombra
+
     for (int i = 0; i < bounces; i++)
     {
         Renderer::HitPayload payload = TraceRay(ray);
         if (payload.HitDistance < 0.0f)
         {
-            glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            glm::vec3 skyColor = glm::vec3(0.0f);
             color += skyColor * multiplier;
             break;
         }
 
-        glm::vec3 accumulatedLight(0.0f);
+        const Shape& shape = *activeScene->Shapes[payload.ObjectIndex];
+        const Material& material = activeScene->Materials[shape.GetMaterialIndex()];
+
+        // Componente de luz ambiental ajustada por su intensidad
+        glm::vec3 accumulatedLight = activeScene->AmbientLight * activeScene->AmbientIntensity * material.Albedo;
 
         // Iterar sobre todas las luces
         for (const Light& light : activeScene->Lights)
@@ -90,24 +97,21 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
             glm::vec3 lightDir = glm::normalize(light.Position - payload.WorldPosition);
             float lightDistance = glm::length(light.Position - payload.WorldPosition);
 
-            // Sombra
+            // Sombra con aleatoriedad
+            glm::vec3 shadowDir = glm::normalize(lightDir + shadowRandomness * Utils::RandomVec3(-0.5f, 0.5f));
             Ray shadowRay;
-            shadowRay.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-            shadowRay.Direction = lightDir;
+            shadowRay.Origin = payload.WorldPosition + payload.WorldNormal * shadowBias;
+            shadowRay.Direction = shadowDir;
 
             Renderer::HitPayload shadowPayload = TraceRay(shadowRay);
-            if (shadowPayload.HitDistance > 0.0f && shadowPayload.HitDistance < lightDistance)
-                continue; // Está en la sombra
+            bool inShadow = (shadowPayload.HitDistance > 0.0f && shadowPayload.HitDistance < lightDistance);
 
-            // Intensidad de la luz
-            float lightIntensity = light.Intensity * 10 * glm::max(glm::dot(payload.WorldNormal, lightDir), 0.001f); // Componente difusa
+            // Intensidad de la luz ajustada por la intensidad de la luz y la sombra
+            float lightIntensity = inShadow ? 0.0f : light.Intensity * glm::max(glm::dot(payload.WorldNormal, lightDir), 0.0f); // Componente difusa
 
             // Atenuación (opcional)
             float attenuation = 1.0f / (lightDistance * lightDistance);
             lightIntensity *= attenuation;
-
-            const Shape& shape = *activeScene->Shapes[payload.ObjectIndex];
-            const Material& material = activeScene->Materials[shape.GetMaterialIndex()];
 
             // Componente difusa
             glm::vec3 diffuse = material.Albedo * lightIntensity * light.Color;
@@ -125,16 +129,12 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
 
         multiplier *= 0.5f;
 
-        Material& material = activeScene->Materials[activeScene->Shapes[payload.ObjectIndex]->GetMaterialIndex()];
-
-        ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-        ray.Direction = glm::reflect(ray.Direction,
-                                     payload.WorldNormal + material.Roughness * Utils::RandomVec3(-0.5f, 0.5f));
+        ray.Origin = payload.WorldPosition + payload.WorldNormal * shadowBias;
+        ray.Direction = glm::reflect(ray.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVec3(-0.5f, 0.5f));
     }
 
     return glm::vec4(color, 1.0f);
 }
-
 
 
 Renderer::HitPayload Renderer::TraceRay(const Ray &ray)

@@ -101,6 +101,10 @@ void Window::mainLoop()
 
         ImGui::Text("Lights");
         ImGui::PushID("Lights");
+        ImGui::Text("Ambient Light");
+        ImGui::ColorEdit3("Ambient Light", glm::value_ptr(scene.AmbientLight));
+        ImGui::DragFloat("Ambient Intensity", &scene.AmbientIntensity, 0.1f);
+        ImGui::BeginGroup();
         for (size_t i = 0; i < scene.Lights.size(); i++)
         {
             ImGui::PushID(i);
@@ -114,6 +118,7 @@ void Window::mainLoop()
 
             ImGui::PopID();
         }
+        ImGui::EndGroup();
         ImGui::Button("Add Light");
         if (ImGui::IsItemClicked())
         {
@@ -131,7 +136,6 @@ void Window::mainLoop()
             Material &material = scene.Materials[i];
             ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
             ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f);
-            // ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f);
             ImGui::DragFloat("Specular", &material.Specular, 0.05f, 0.0f, 1.0f);
             ImGui::DragFloat("Shininess", &material.Shininess, 0.05f, 0.0f, 100.0f);
 
