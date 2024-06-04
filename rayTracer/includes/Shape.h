@@ -5,6 +5,12 @@
 #include "Ray.h"
 #include <vector>
 
+enum class ShapeType
+{
+    Sphere,
+    Plane
+};
+
 class Shape {
 public:
     Shape() = default;
@@ -22,5 +28,6 @@ public:
 
     glm::vec3 Position{0.0f};
     int MaterialIndex = 0;
+    ShapeType Type;
 };
 

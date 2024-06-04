@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Window.h"
+#include "Scene.h"
 #include <random>
 #include <execution>
 #include <algorithm>
@@ -75,24 +76,55 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
         Renderer::HitPayload payload = TraceRay(ray);
         if (payload.HitDistance < 0.0f)
         {
-            glm::vec3 skyColor = glm::vec3(0.6f, 0.7f, 0.9f);
+            glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
             color += skyColor * multiplier;
-            if (i > 1)
-                std::cout << "skyColor: " << i << std::endl;
             break;
         }
 
-        glm::vec3 lightDir = glm::normalize(glm::vec3(-1, -1, -1));
-        float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
+        glm::vec3 accumulatedLight(0.0f);
 
-        const Shape &shape = *activeScene->Shapes[payload.ObjectIndex];
-        const Material &material = activeScene->Materials[shape.GetMaterialIndex()];
+        // Iterar sobre todas las luces
+        for (const Light& light : activeScene->Lights)
+        {
+            glm::vec3 lightDir = glm::normalize(light.Position - payload.WorldPosition);
+            float lightDistance = glm::length(light.Position - payload.WorldPosition);
 
-        glm::vec3 sphapeColor = material.Albedo;
-        sphapeColor *= lightIntensity;
-        color += sphapeColor * multiplier;
+            // Sombra
+            Ray shadowRay;
+            shadowRay.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
+            shadowRay.Direction = lightDir;
+
+            Renderer::HitPayload shadowPayload = TraceRay(shadowRay);
+            if (shadowPayload.HitDistance > 0.0f && shadowPayload.HitDistance < lightDistance)
+                continue; // Está en la sombra
+
+            // Intensidad de la luz
+            float lightIntensity = glm::max(glm::dot(payload.WorldNormal, lightDir), 0.0f); // Componente difusa
+
+            // Atenuación (opcional)
+            float attenuation = 1.0f / (lightDistance * lightDistance);
+            lightIntensity *= attenuation;
+
+            const Shape& shape = *activeScene->Shapes[payload.ObjectIndex];
+            const Material& material = activeScene->Materials[shape.GetMaterialIndex()];
+
+            // Componente difusa
+            glm::vec3 diffuse = material.Albedo * lightIntensity * light.Color;
+
+            // Componente especular (Phong)
+            glm::vec3 viewDir = glm::normalize(ray.Origin - payload.WorldPosition);
+            glm::vec3 reflectDir = glm::reflect(-lightDir, payload.WorldNormal);
+            float spec = glm::pow(glm::max(glm::dot(viewDir, reflectDir), 0.0f), material.Shininess);
+            glm::vec3 specular = material.Specular * spec * light.Color;
+
+            accumulatedLight += diffuse + specular;
+        }
+
+        color += accumulatedLight * multiplier;
 
         multiplier *= 0.5f;
+
+        Material& material = activeScene->Materials[activeScene->Shapes[payload.ObjectIndex]->GetMaterialIndex()];
 
         ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
         ray.Direction = glm::reflect(ray.Direction,
@@ -101,6 +133,8 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
 
     return glm::vec4(color, 1.0f);
 }
+
+
 
 Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
 {

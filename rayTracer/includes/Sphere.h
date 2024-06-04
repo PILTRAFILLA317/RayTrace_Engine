@@ -19,6 +19,7 @@ public:
     float GetRadius() const { return Radius; }
     void SetRadius(float radius) { Radius = radius; }
 
-private:
     float Radius = 0.5f;
+    ShapeType Type = ShapeType::Sphere;
+private:
 };

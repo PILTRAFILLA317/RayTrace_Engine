@@ -80,6 +80,8 @@ void Window::mainLoop()
 
             Shape &shape = *scene.Shapes[i];
             ImGui::DragFloat3("Position", glm::value_ptr(shape.Position), 0.1f);
+            if (shape.Type == ShapeType::Sphere)
+                ImGui::DragFloat("Radius", &((Sphere &)shape).Radius, 0.1f);
             // ImGui::DragFloat("Radius", &shape.Radius, 0.1f);
             ImGui::DragInt("Material", &shape.MaterialIndex, 1.0f, 0, (int)scene.Materials.size() - 1);
 
@@ -95,6 +97,31 @@ void Window::mainLoop()
             scene.Shapes.push_back(sphere);
         }
 
+        ImGui::Separator();
+
+        ImGui::Text("Lights");
+        ImGui::PushID("Lights");
+        for (size_t i = 0; i < scene.Lights.size(); i++)
+        {
+            ImGui::PushID(i);
+
+            Light &light = scene.Lights[i];
+            ImGui::DragFloat3("Position", glm::value_ptr(light.Position), 0.1f);
+            ImGui::ColorEdit3("Color", glm::value_ptr(light.Color));
+
+            ImGui::Separator();
+
+            ImGui::PopID();
+        }
+        ImGui::Button("Add Light");
+        if (ImGui::IsItemClicked())
+        {
+            Light light;
+            light.Position = {0.0f, 0.0f, 0.0f};
+            light.Color = {1.0f, 1.0f, 1.0f};
+            scene.Lights.push_back(light);
+        }
+        ImGui::PopID();
         ImGui::Text("Materials");
         for (size_t i = 0; i < scene.Materials.size(); i++)
         {
