@@ -9,13 +9,14 @@ struct Light
 {
     glm::vec3 Position;
     glm::vec3 Color;
+	float Intensity;
 };
 
 struct Material
 {
     glm::vec3 Albedo{ 1.0f };
     float Roughness = 1.0f;
-    float Metallic = 0.0f;
+    // float Metallic = 0.0f;
     float Specular = 0.5f; // Intensidad especular
     float Shininess = 32.0f; // Exponente especular
 };

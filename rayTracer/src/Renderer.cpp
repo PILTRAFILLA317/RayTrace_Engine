@@ -8,6 +8,7 @@
 
 namespace Utils
 {
+    const float pi = 3.14159265358979323846;
     static thread_local std::mt19937 RandomEngine;
     static std::uniform_int_distribution<std::mt19937::result_type> Distribution;
 
@@ -99,7 +100,7 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
                 continue; // Está en la sombra
 
             // Intensidad de la luz
-            float lightIntensity = glm::max(glm::dot(payload.WorldNormal, lightDir), 0.0f); // Componente difusa
+            float lightIntensity = light.Intensity * 10 * glm::max(glm::dot(payload.WorldNormal, lightDir), 0.001f); // Componente difusa
 
             // Atenuación (opcional)
             float attenuation = 1.0f / (lightDistance * lightDistance);

@@ -108,6 +108,7 @@ void Window::mainLoop()
             Light &light = scene.Lights[i];
             ImGui::DragFloat3("Position", glm::value_ptr(light.Position), 0.1f);
             ImGui::ColorEdit3("Color", glm::value_ptr(light.Color));
+            ImGui::DragFloat("Intensity", &light.Intensity, 0.1f);
 
             ImGui::Separator();
 
@@ -130,7 +131,9 @@ void Window::mainLoop()
             Material &material = scene.Materials[i];
             ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
             ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f);
-            ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f);
+            // ImGui::DragFloat("Metallic", &material.Metallic, 0.05f, 0.0f, 1.0f);
+            ImGui::DragFloat("Specular", &material.Specular, 0.05f, 0.0f, 1.0f);
+            ImGui::DragFloat("Shininess", &material.Shininess, 0.05f, 0.0f, 100.0f);
 
             ImGui::Separator();
 
