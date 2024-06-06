@@ -25,9 +25,12 @@ public:
 
     glm::vec3 GetPosition() const { return Position; }
     void SetPosition(const glm::vec3& position) { Position = position; }
+    ShapeType GetType() const { return Type; }
+    ShapeType SetType(ShapeType type) { Type = type; }
 
     glm::vec3 Position{0.0f};
     int MaterialIndex = 0;
+private:
     ShapeType Type;
 };
 

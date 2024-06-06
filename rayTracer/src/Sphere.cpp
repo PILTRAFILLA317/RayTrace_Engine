@@ -8,8 +8,8 @@ Sphere::Sphere() : Shape()
 {
     this->Position = glm::vec3(0.0f);
     this->Radius = 0.5f;
-
     this->MaterialIndex = 0;
+    this->SetType(ShapeType::Sphere);
 }
 
 Sphere::~Sphere()
@@ -43,7 +43,7 @@ bool Sphere::Intersect(const glm::vec3 &RayOrigin, const glm::vec3 &RayDirection
 
 glm::vec3 Sphere::GetNormal(const glm::vec3 &Point) const
 {
-    return glm::normalize(Point - Position);
+    return glm::normalize(Point);
 }
 
 float Sphere::GetClosestHit(const Ray &ray) const

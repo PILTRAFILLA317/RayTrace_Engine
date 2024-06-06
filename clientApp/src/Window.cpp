@@ -76,27 +76,42 @@ void Window::mainLoop()
         ImGui::Text("Shapes");
         for (size_t i = 0; i < scene.Shapes.size(); i++)
         {
+            if (scene.Shapes[i]->GetType() == ShapeType::Sphere)
+                ImGui::Text("Sphere");
+            else if (scene.Shapes[i]->GetType() == ShapeType::Plane)
+                ImGui::Text("Plane");
             ImGui::PushID(i);
 
             Shape &shape = *scene.Shapes[i];
             ImGui::DragFloat3("Position", glm::value_ptr(shape.Position), 0.1f);
-            if (shape.Type == ShapeType::Sphere)
+            if (shape.GetType() == ShapeType::Sphere)
                 ImGui::DragFloat("Radius", &((Sphere &)shape).Radius, 0.1f);
-            // ImGui::DragFloat("Radius", &shape.Radius, 0.1f);
+            else if (shape.GetType() == ShapeType::Plane)
+                ImGui::DragFloat3("Normal", glm::value_ptr(((Plane &)shape).Normal), 0.1f);
             ImGui::DragInt("Material", &shape.MaterialIndex, 1.0f, 0, (int)scene.Materials.size() - 1);
 
             ImGui::Separator();
 
             ImGui::PopID();
         }
-        ImGui::Button("Add Shape");
+        ImGui::PushID("Sphere");
+        ImGui::Button("Add Sphere");
         if (ImGui::IsItemClicked())
         {
             // Sphere sphere = Sphere();
             std::shared_ptr<Shape> sphere = std::make_shared<Sphere>();
             scene.Shapes.push_back(sphere);
         }
-
+        ImGui::PopID();
+        ImGui::PushID("Plane");
+        ImGui::Button("Add Plane");
+        if (ImGui::IsItemClicked())
+        {
+            // Plane plane = Plane();
+            std::shared_ptr<Shape> plane = std::make_shared<Plane>();
+            scene.Shapes.push_back(plane);
+        }
+        ImGui::PopID();
         ImGui::Separator();
 
         ImGui::Text("Lights");
@@ -107,6 +122,7 @@ void Window::mainLoop()
         ImGui::BeginGroup();
         for (size_t i = 0; i < scene.Lights.size(); i++)
         {
+            ImGui::Text("Light %d", i);
             ImGui::PushID(i);
 
             Light &light = scene.Lights[i];

@@ -12,6 +12,8 @@
 #include "Window.h"
 #include "Ray.h"
 #include "Scene.h"
+#include "Sphere.h"
+#include "Plane.h"
 
 class Window;
 

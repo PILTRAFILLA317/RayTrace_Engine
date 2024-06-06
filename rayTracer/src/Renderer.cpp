@@ -47,7 +47,6 @@ Renderer::Renderer(Window &window) : window(window)
 void Renderer::Update(float ts)
 {
     activeCamera->OnResize(image.width, image.height);
-    // activeCamera->OnUpdate(ts);
     if (activeCamera->OnUpdate(ts))
         ResetFrameIndex();
     Render(*activeScene, *activeCamera);
@@ -72,8 +71,8 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
     float multiplier = 1.0f;
 
     int bounces = 5;
-    float shadowBias = 0.0001f; // Pequeño desplazamiento para evitar autointersección
-    float shadowRandomness = 0.1f; // Ajusta la aleatoriedad de la sombra
+    float shadowBias = 0.001f;      // Ajustar el bias para evitar patrones
+    float shadowRandomness = 0.02f; // Ajustar la aleatoriedad para suavizar sombras
 
     for (int i = 0; i < bounces; i++)
     {
@@ -85,20 +84,20 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
             break;
         }
 
-        const Shape& shape = *activeScene->Shapes[payload.ObjectIndex];
-        const Material& material = activeScene->Materials[shape.GetMaterialIndex()];
+        const Shape &shape = *activeScene->Shapes[payload.ObjectIndex];
+        const Material &material = activeScene->Materials[shape.GetMaterialIndex()];
 
         // Componente de luz ambiental ajustada por su intensidad
         glm::vec3 accumulatedLight = activeScene->AmbientLight * activeScene->AmbientIntensity * material.Albedo;
 
         // Iterar sobre todas las luces
-        for (const Light& light : activeScene->Lights)
+        for (const Light &light : activeScene->Lights)
         {
             glm::vec3 lightDir = glm::normalize(light.Position - payload.WorldPosition);
             float lightDistance = glm::length(light.Position - payload.WorldPosition);
 
-            // Sombra con aleatoriedad
-            glm::vec3 shadowDir = glm::normalize(lightDir + shadowRandomness * Utils::RandomVec3(-0.5f, 0.5f));
+            // Sombra con aleatoriedad ajustada
+            glm::vec3 shadowDir = glm::normalize(lightDir + shadowRandomness * Utils::RandomVec3(-1.0f, 1.0f));
             Ray shadowRay;
             shadowRay.Origin = payload.WorldPosition + payload.WorldNormal * shadowBias;
             shadowRay.Direction = shadowDir;
@@ -136,16 +135,8 @@ glm::vec4 Renderer::RayGun(glm::uint32 x, glm::uint32 y)
     return glm::vec4(color, 1.0f);
 }
 
-
 Renderer::HitPayload Renderer::TraceRay(const Ray &ray)
 {
-    // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
-    // where
-    // a = ray origin
-    // b = ray direction
-    // r = radius
-    // t = hit distance
-
     int closestShape = -1;
     float hitDistance = std::numeric_limits<float>::max();
 
@@ -206,7 +197,7 @@ void Renderer::Render(Scene &scene, Camera &camera)
     ray.Origin = camera.GetPosition();
     glm::uint32 *data = new glm::uint32[image.width * image.height];
 
-#define MT 1
+#define MT 0
 #if MT
     tbb::parallel_for_each(vIter.begin(), vIter.end(),
                            [this, data](uint32_t y)
@@ -272,7 +263,7 @@ Renderer::HitPayload Renderer::ClosestHit(const Ray &ray, float hitDistance, int
 
     glm::vec3 origin = ray.Origin - closestShape.GetPosition();
     payload.WorldPosition = origin + ray.Direction * hitDistance;
-    payload.WorldNormal = glm::normalize(payload.WorldPosition);
+    payload.WorldNormal = closestShape.GetNormal(payload.WorldPosition);
 
     payload.WorldPosition += closestShape.GetPosition();
 
